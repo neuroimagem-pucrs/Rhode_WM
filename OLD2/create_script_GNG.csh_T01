@@ -1,0 +1,127 @@
+#! /bin/csh
+
+
+# This is the script to create preprocessing scripts for the 
+# frases nonsense paradigm
+
+
+set subj = $1
+set script_folder = $2
+set run = $3
+set study = $4
+
+
+# Get out of the SCRIPTS folder
+#cd ..
+#cd ${study}${subj}
+
+
+# Included  
+# -init_xform AUTO_CENTER 
+# for subject 002, to improve segmentation
+# increased -shrink_fac_bot_lim from 0.8 to 1.2 	
+
+afni_proc.py \
+	-subj_id ${study}${subj}                        \
+	-script proc.${study}${subj}.${run}.tcsh 		\
+	-out_dir PROC.${run} 							\
+	-dsets ${run}/${study}${subj}.${run}.nii.gz	    \
+	-copy_anat ANAT/${study}${subj}.ANAT.nii.gz		\
+ 	-do_block despike align tlrc  					\
+	-tcat_remove_first_trs 3                        \
+	-tshift_opts_ts -tpattern alt+z					\
+	-volreg_align_to first							\
+	-volreg_align_e2a								\
+	-align_opts_aea -giant_move 					\
+	-volreg_tlrc_warp								\
+	-align_opts_aea -skullstrip_opts 				\
+		-shrink_fac_bot_lim 0.8 					\
+		-no_use_edge									\
+	-tlrc_base MNI_caez_N27+tlrc					\
+        -mask_segment_anat yes						\
+	-blur_filter -1blur_fwhm						\
+	-blur_size 6 									\
+   	-regress_stim_times 					\
+   		${script_folder}/timing/GNG/GoLeft.txt 		\
+		${script_folder}/timing/GNG/GoLeftUp.txt	\
+   		${script_folder}/timing/GNG/GoRight.txt		\
+		${script_folder}/timing/GNG/GoRightUp.txt	\
+		${script_folder}/timing/GNG/NoGo.txt		\
+		${script_folder}/timing/GNG/Baseline.txt	\
+		-regress_stim_labels GoLeft GoLeftUp GoRight GoRightUp NoGo Baseline \
+		-regress_basis_multi						\
+		'BLOCK(0.5,1)' 'BLOCK(0.5,1)' 'BLOCK(0.5,1)' 'BLOCK(0.5,1)' 'BLOCK(0.5,1)' 'BLOCK(30,1)' \
+			-regress_censor_outliers 0.15              \
+		-regress_opts_3dD							\
+		-gltsym 'SYM: +GoLeft -Baseline' 		\
+	 	-glt_label 1 GoLeft_vs_Baseline  		\
+		-gltsym 'SYM: +GoLeftUp -Baseline' 		\
+	 	-glt_label 2 GoLeftUp_vs_Baseline  		\
+		-gltsym 'SYM: +GoRight -Baseline' 		\
+	 	-glt_label 3 GoRight_vs_Baseline  		\
+	 	-gltsym 'SYM: +GoRightUp -Baseline' 		\
+	 	-glt_label 4 GoRightUp_vs_Baseline  		\
+	 	-gltsym 'SYM: +NoGo -Baseline' 		\
+	 	-glt_label 5 NoGo_vs_Baseline  		\
+	 	-gltsym 'SYM: +0.2*GoLeft +0.2*GoLeftUp +0.2*GoRight +0.2*GoRightUp +0.2*NoGo -Baseline' 		\
+	 	-glt_label 6 All_vs_Baseline  		\
+			-jobs 6										\
+			-local_times 								\
+        	-regress_est_blur_epits						\
+	    	-regress_est_blur_errts						\
+			-regress_apply_mot_types demean				\
+			-regress_run_clustsim yes
+
+
+exit
+
+# 22/11/2014
+# old script below. I removed the baseline condition
+
+
+afni_proc.py \
+	-subj_id ${study}${subj}                        \
+	-script proc.${study}${subj}.${run}.tcsh 		\
+	-out_dir PROC.${run} 							\
+	-dsets ${run}/${study}${subj}.${run}.nii.gz	    \
+	-copy_anat ANAT/${study}${subj}.ANAT.nii.gz		\
+ 	-do_block despike align tlrc  					\
+	-tcat_remove_first_trs 3                        \
+	-tshift_opts_ts -tpattern alt+z					\
+	-volreg_align_to first							\
+	-volreg_align_e2a								\
+	-align_opts_aea -giant_move 					\
+	-volreg_tlrc_warp								\
+	-align_opts_aea -skullstrip_opts 				\
+		-shrink_fac_bot_lim 0.8 					\
+		-no_use_edge								\
+	-tlrc_base MNI_caez_N27+tlrc					\
+        -mask_segment_anat yes						\
+	-blur_filter -1blur_fwhm						\
+	-blur_size 6 									\
+   	-regress_stim_times 							\
+   		${script_folder}/timing/GNG_leftgreen.1D 	\
+		${script_folder}/timing/GNG_rightgreen.1D	\
+		${script_folder}/timing/GNG_circlegreen.1D	\
+		${script_folder}/timing/GNG_baseline.1D	\
+		-regress_stim_labels LeftGreen  RightGreen CircleGreen Baseline \
+		-regress_basis_multi						\
+		'BLOCK(1.5,1)' 'BLOCK(1.5,1)' 'BLOCK(1.5,1)' 'BLOCK(30.0,1)' \
+		-regress_opts_3dD							\
+			-gltsym 'SYM: +LeftGreen -Baseline'		\
+ 			-glt_label 1 LeftGreen_vs_Baseline		\
+			-gltsym 'SYM: +RightGreen -Baseline'	\
+ 			-glt_label 2 RightGreen_vs_Baseline		\
+			-gltsym 'SYM: +CircleGreen -Baseline'		\
+ 			-glt_label 3 CircleGreen_vs_Baseline		\
+		-jobs 6										\
+		-local_times 								\
+        -regress_est_blur_epits						\
+	    -regress_est_blur_errts						\
+		-regress_apply_mot_types demean				\
+		-regress_run_clustsim yes
+
+exit
+
+
+
